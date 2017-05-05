@@ -30,7 +30,7 @@ parameters, parameterList, parameterDecl,  methodName, block, statementList, dec
 
 
 /* Precedences */
-/*
+
 precedence left OR_OP, AND_OP; 
 precedence left REL_OP;
 precedence left PLUS, MINUS, BAR;
@@ -38,17 +38,16 @@ precedence left ASTRISK, SLASH, SHIFT_LEFT, SHIFT_RIGHT, PERCENT, AMBERSAND;
 precedence left EXCLAMATION, LESS_DASH;
 precedence left EQUAL, COMMA, SEMI_COLON;
 precedence left COLON;
-*/
 
-precedence left BAR,AMBERSAND, EXCLAMATION, DOT;
-precedence left PLUS,MINUS;
-precedence left SHIFT_LEFT,SHIFT_RIGHT;
-precedence left AND_OP,OR_OP;
-precedence left REL_OP;
-precedence left ASTRISK,SLASH,PERCENT;
-precedence left OPEN_PARAN, LESS_DASH, OPEN_SQUARE, OPEN_CURLY;
-precedence left PACKAGE,IMPORT,FUNC, TYPE, STRUCT, COLON_EQUAL;
-precedence left IDENTIFIER, STRING_LIT, INT_LIT, COMMA;
+// precedence left BAR,AMBERSAND, EXCLAMATION, DOT;
+// precedence left PLUS,MINUS;
+// precedence left SHIFT_LEFT,SHIFT_RIGHT;
+// precedence left AND_OP,OR_OP;
+// precedence left REL_OP;
+// precedence left ASTRISK,SLASH,PERCENT;
+// precedence left OPEN_PARAN, LESS_DASH, OPEN_SQUARE, OPEN_CURLY;
+// precedence left PACKAGE,IMPORT,FUNC, TYPE, STRUCT, COLON_EQUAL;
+// precedence left IDENTIFIER, STRING_LIT, INT_LIT, COMMA;
 
 
 start with sourceFile;
@@ -80,12 +79,12 @@ functionType ::= FUNC signature:s
 
 signature ::= parameters:p result
 				{:
-					RESULT= p;
+					RESULT= "";
 					System.out.println("signature 31 " + RESULT);
 				:}
 				| parameters:p
 				{:
-					RESULT= p;
+					RESULT= "";
 					System.out.println("signature " + RESULT);
 					
 				:};
@@ -143,6 +142,7 @@ statementList ::= statement:s statementList:st
 						RESULT = s + "\n" + st;
 					else
 						RESULT = s;
+					System.out.println("statementList -- " + s + " " + st);
 					System.out.println("statementList " + RESULT);
 				 	
 				:}
@@ -208,8 +208,10 @@ identifierList ::= IDENTIFIER:i identifierListHelper:ih
 					System.out.println("identifierList IDENTIFIER " + RESULT);
 				:};
 
-identifierListHelper ::= COMMA IDENTIFIER identifierListHelper 
+identifierListHelper ::= COMMA IDENTIFIER:i identifierListHelper:ih 
         		{:
+        			RESULT = ", " + i +  ih;
+        			System.out.println("hamada " + i + ih);
 				:}
 		        |
 		        {:
@@ -413,7 +415,13 @@ shortVarDecl ::= identifierList:il COLON_EQUAL expression:e
 		    			}
 		    			System.out.println("shortVarDecl " + il + " " + e);	
 		    		} else {
-		    			RESULT = il + " = " + e;
+		    			if(e.contains("push")) {
+		    				RESULT = e;
+		    				RESULT += "\n" + il +" = " + (Constants.tCounter-1);
+		    			} else {
+		    				RESULT = il + " = " + e;
+		    			}
+		    			
 		    		}
 				:};
 
@@ -431,6 +439,7 @@ functionDecl ::= FUNC functionName:f function:fn
 				
 functionName ::= IDENTIFIER:i
 				{:
+					Constants.functions.add(i);
 					RESULT = i + ":";
 					System.out.println("functionNAme " + RESULT);
 				 	
@@ -443,7 +452,7 @@ function ::= signature:sig functionBody:fb
 						RESULT = fb;
 					else
 						RESULT = sig +  fb;
-					System.out.println("function-sign " + fb);
+					System.out.println("function-sign " + sig  + " "+ fb);
 				 	
 				:};	
 
@@ -467,7 +476,12 @@ operand ::= literal:l
 				:}	
 				| operandName:on
 				{:	
-					RESULT = on;
+					if(Constants.functions.contains(on)) {
+						RESULT = "t" + (Constants.tCounter++) + "= call " + on + "\n" + "pop_params;"; 
+					}else {
+						RESULT = on;
+					}
+					
 					System.out.println("Operand operandName " + RESULT);
 					
 				:}
@@ -665,8 +679,28 @@ incDecStmt ::= expression INCREMENT
 
 assignment ::= expressionList:e1 assign_op:op expressionList:e2
          	 {:	
-          			//RESULT = e1 + "=" + "t" + Constants.tCounter++ +  e1 + op + e2;
-				 
+
+         	 	if(Constants.exQueue.size() == 1) {
+	    			SingleExpression top = Constants.exQueue.remove();
+	    			RESULT =  top.body + "\n";
+	    			RESULT += e1.replace("push_params: ", "") + " = " +"t"+ (Constants.tCounter - 1);
+	    		} else if(!Constants.exQueue.isEmpty()) {
+	    			SingleExpression top = Constants.exQueue.remove();
+	    			RESULT = top.body + "\n";
+	    			while(!Constants.exQueue.isEmpty()) {
+	    				RESULT += Constants.exQueue.peek().body.replace(top.body, top.head) + "\n";
+	    				top = Constants.exQueue.remove();
+	    			}
+	    			RESULT += e1.replace("push_params: ", "") + " = " +"t"+ (Constants.tCounter - 1);
+	    		} else {
+	    			RESULT = e2 + "\n" + e1 + "= " + "t" + (Constants.tCounter-1);
+				 	RESULT = RESULT.replace("push_params: ", "");
+	    		}
+          			
+				 	System.out.println("QUEUEUE");
+				 	System.out.println(Constants.exQueue);
+				 	System.out.println("QUEUEUE");
+				 	System.out.println("assignment X " + RESULT);
 				:} ;
  
 assign_op ::=   EQUAL | PLUS EQUAL | MINUS EQUAL | ASTRISK EQUAL | SLASH EQUAL | SHIFT_RIGHT EQUAL | SHIFT_LEFT EQUAL;
@@ -854,9 +888,9 @@ postStmt ::= simpleStmt
 				
 			:} ;	
 		   		   
-returnStmt ::= RETURN expressionList 
+returnStmt ::= RETURN expressionList:ex
 				{:
-				
+					RESULT = "return " + ex.replace("push_params: ", "").replace("\n", ", ");
 				:}
 				| RETURN;
 

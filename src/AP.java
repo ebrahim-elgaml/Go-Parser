@@ -10,8 +10,8 @@ import java_cup.runtime.Symbol;
 public class AP {
 	public static void main(String[] args) {
 
-		String inFile = "MS3/Go2.in";
-		String outFile = "MS3/Output2.out";
+		String inFile = "MS3/Go3.in";
+		String outFile = "MS3/Output3.out";
 
 		if (args.length > 1) {
 			inFile = args[0];

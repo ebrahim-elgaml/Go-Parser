@@ -20,6 +20,7 @@ public class Constants {
 	static int tCounter = 0;
 	static Queue<SingleExpression> exQueue = new LinkedList<SingleExpression>();
 	static int lCounter = 0;
+	static ArrayList<String> functions = new ArrayList<String>();
 	public Constants(){
 	};
 	
