@@ -78,7 +78,7 @@ functionType ::= FUNC signature:s
 					System.out.println("functionType" + RESULT);
 				:};
 
-signature ::= parameters:p result:r 
+signature ::= parameters:p result
 				{:
 					RESULT= p;
 					System.out.println("signature 31 " + RESULT);
@@ -102,19 +102,29 @@ parameters ::=  OPEN_PARAN parameterList:pl CLOSE_PARAN
 				:}
 				|   OPEN_PARAN CLOSE_PARAN ;
 
-parameterList ::= parameterDecl parameterListHelper
+parameterList ::= parameterDecl:pdecl parameterListHelper:phelper
         		{:
+        			RESULT = pdecl + phelper;
+        			System.out.println("PARAMETERSLIST  " + RESULT);	
+
 				:};
 
-parameterListHelper ::= COMMA parameterDecl parameterListHelper
-        		{:
-				 	
-				:}
- 				| ; 
+parameterListHelper ::= COMMA parameterDecl:pdecl parameterListHelper:phelper
+       	 	{:	
+        		RESULT = pdecl + phelper;
+        		System.out.println("PARAMETERSLISTHELPERS  " + RESULT);	
 
-parameterDecl ::= identifierList CDOTS type | identifierList type
-   		{:		 	
-		:};
+				 	
+			:}
+			| ; 
+
+parameterDecl ::= identifierList CDOTS type | identifierList:il type:t
+  			 {:	
+  			 	RESULT = il + t;
+        		System.out.println("PARAMETERSDECL " + RESULT);	
+
+
+			:};
 
 methodName ::= IDENTIFIER
 			{:
@@ -123,7 +133,7 @@ methodName ::= IDENTIFIER
 
 block ::= OPEN_CURLY  statementList:s CLOSE_CURLY
 		{:
-			RESULT = "begin_func;" +  "\n" + s + "\n" + "end_func;";
+			RESULT = (s== null ? "" : s);
 			System.out.println("block" + RESULT);	
 		:};	
 
@@ -192,8 +202,9 @@ constSpec ::= IDENTIFIER:i type EQUAL expression:e
 				| IDENTIFIER ;	
 
 
-identifierList ::= IDENTIFIER identifierListHelper
+identifierList ::= IDENTIFIER:i identifierListHelper:ih
 				{:
+					RESULT = i +ih;
 				:};	
 
 identifierListHelper ::= COMMA IDENTIFIER identifierListHelper 
@@ -205,15 +216,18 @@ identifierListHelper ::= COMMA IDENTIFIER identifierListHelper
 
 expressionList ::= expression:e expressionListHelper:eh
 				{:
-					RESULT = e ;
-					System.out.println("expressionList " + RESULT);
-				 					 
+					if(eh != null)
+			 			RESULT = e + eh;
+			 		else
+			 			RESULT = e;
+			 		System.out.println("expressionList XXX" + RESULT);
 				:};
 
 expressionListHelper ::= COMMA expression expressionListHelper 
 					{:
 				 	:}
 					| {:
+						RESULT = "";
 				 	:};
 
 expression ::= unaryExpr:u
@@ -234,9 +248,14 @@ expression ::= unaryExpr:u
 			 	{:
 				
 				:}
-				| expression AND_OP expression
+				| expression:e1 AND_OP:sig expression:e2
 			 	{:
-				 	
+					SingleExpression single = new SingleExpression( "t" + Constants.tCounter, "t" + Constants.tCounter + " =" +  e1 + sig + e2 );
+			 		Constants.tCounter++;
+			 		Constants.exQueue.add(single);
+			 		RESULT = single.body;
+			 		System.out.println("EXPRESSION101 " + RESULT);
+
 				:}
 				| expression:e1 PLUS:sig expression:e2
 			 	{:
@@ -272,8 +291,13 @@ expression ::= unaryExpr:u
 			 		System.out.println("EXPRESSION101 " + RESULT);
 			 		
 				:}
-				| expression PERCENT expression
+				| expression:e1 PERCENT:sig expression:e2
 			 	{:
+			 		SingleExpression single = new SingleExpression( "t" + Constants.tCounter, "t" + Constants.tCounter + " =" +  e1 + sig + e2 );
+			 		Constants.tCounter++;
+			 		Constants.exQueue.add(single);
+			 		RESULT = single.body;
+			 		System.out.println("EXPRESSION101 " + RESULT);
 			 		
 				:}
 				| expression:e1 SHIFT_RIGHT:sig expression:e2
@@ -283,7 +307,6 @@ expression ::= unaryExpr:u
 			 		Constants.exQueue.add(single);
 			 		RESULT = single.body;
 			 		System.out.println("EXPRESSION101 " + RESULT);
-			 		
 				:}
 				| expression SHIFT_LEFT  expression
 			 	{:
@@ -354,12 +377,15 @@ varSpec ::= IDENTIFIER type | IDENTIFIER type EQUAL expression
 	    		}
 	  			
 			:};
-		  
+
 shortVarDecl ::= identifierList:il COLON_EQUAL expression:e
 				{:
 					if(Constants.exQueue.size() == 1 || Constants.exQueue.isEmpty()) {
 		    			if(Constants.exQueue.size() == 1) Constants.exQueue.remove();
-		    			RESULT =  e;
+		    			if(il == null)
+		    				RESULT =  e;
+		    			else
+		    				RESULT = il + " = " + e ;
 		  				System.out.println("shortVarDecl " +  e);	
 		    		} else if(!Constants.exQueue.isEmpty()) {
 		    			SingleExpression top = Constants.exQueue.remove();
@@ -375,12 +401,12 @@ shortVarDecl ::= identifierList:il COLON_EQUAL expression:e
 functionDecl ::= FUNC functionName:f function:fn
 			{:
 				RESULT = f + "\n" + fn;
-				System.out.println("functionDecl" + RESULT);
+				System.out.println("functionDecl - name " + RESULT);
 				 	
 				:}
-			 | FUNC functionName:f signature
+			 | FUNC functionName:f signature:sig
 			 {:
-			 	
+			 		RESULT = f + sig;
 				 	
 				:};	
 				
@@ -392,19 +418,22 @@ functionName ::= IDENTIFIER:i
 				:};	
 
 
-function ::= signature functionBody:fb
+function ::= signature:sig functionBody:fb
 				{:
+					if(sig == null)
 						RESULT = fb;
-						System.out.println("function" + fb);
+					else
+						RESULT = sig +  fb;
+					System.out.println("function-sign " + fb);
 				 	
 				:};	
 
 functionBody ::= block:b
 			{:
-					RESULT = b;
-					System.out.println("functionBody" + b);
+				RESULT = "begin_func;" +  "\n" + b + "\n" + "end_func;";
+				System.out.println("functionBody " + b);
 				 
-				:};	
+			:};	
 
 methodDecl ::= FUNC receiver methodName function 
 			 | FUNC receiver methodName signature;
@@ -548,12 +577,16 @@ statement ::=  declaration:d {:
 				
 				:}  
 			 | breakStmt  SEMI_COLON | block   | block  SEMI_COLON   
-			 | ifStmt 
-			 {:		
+			 | ifStmt:ifstmt 
+			 {:	
+			 		RESULT = ifstmt;
+			 		System.out.println("BLOCK IF STMT " + RESULT);	
 			 	
 				:}
-			 | ifStmt   SEMI_COLON 
+			 | ifStmt:f   SEMI_COLON:semi 
 			 {:		
+			 		System.out.println("BLOCK IF STMT SEMI COLON " + RESULT);	
+
 			 		
 				:}  
 		     | switchStmt
@@ -577,7 +610,6 @@ simpleStmt ::=  shortVarDecl:v
 				 {:
 				 	RESULT = v;
 					System.out.println("Simple Statement shortVarDecl " + RESULT);
-				 
 				:}| expressionStmt:ex
 				{:
 					RESULT = ex;
@@ -587,8 +619,9 @@ simpleStmt ::=  shortVarDecl:v
 				{:
 				 
 				:}
-				| assignment
+				| assignment:assig
 				{:
+						RESULT = assig;
 				
 				:}
 		
@@ -611,34 +644,61 @@ incDecStmt ::= expression INCREMENT
 				 	
 				:} ;
 
-assignment ::= expressionList assign_op expressionList
-          {:
+assignment ::= expressionList:e1 assign_op:op expressionList:e2
+         	 {:	
+          			//RESULT = e1 + "=" + "t" + Constants.tCounter++ +  e1 + op + e2;
 				 
 				:} ;
  
 assign_op ::=   EQUAL | PLUS EQUAL | MINUS EQUAL | ASTRISK EQUAL | SLASH EQUAL | SHIFT_RIGHT EQUAL | SHIFT_LEFT EQUAL;
 
-ifStmt ::=  IF   expression block ifStmtHelper1
+ifStmt ::=  IF   expression:e block:b ifStmtHelper1:ifhelper
 			{:		
+
+				String ee="";
+				SingleExpression top = null;
+				if(Constants.exQueue.size() == 1 || Constants.exQueue.isEmpty()) {
+	    			if(Constants.exQueue.size() == 1) top = Constants.exQueue.remove();
+	    			ee =  e;
+	  				System.out.println("ifStmt  " + ee);	
+	    		} else if(!Constants.exQueue.isEmpty()) {
+	    			top = Constants.exQueue.remove();
+	    			ee = top.body + "\n";
+	    			while(!Constants.exQueue.isEmpty()) {
+	    				ee += Constants.exQueue.peek().body.replace(top.body, top.head) + "\n";
+	    				top = Constants.exQueue.remove();
+	    			}
+	    		}
+				RESULT = ee + "IF " + (top != null ? top.head : "t" + (Constants.tCounter-1) ) + " GOTO L" +(Constants.lCounter++) + "\n"  ;
+				RESULT += "GOTO L" + Constants.lCounter + "\n";
+				RESULT += "L" + (Constants.lCounter-1) + ":\n" +b;
 				
+				if(ifhelper != null) {
+					RESULT += "\n" + "Goto LL" + (Constants.lCounter-1) +"\n"  + "L" + Constants.lCounter++ + ":\n" +ifhelper;
+				}
 				
-				
-				
-				
-					
-				:}
-			| IF simpleStmt  SEMI_COLON  expression block ifStmtHelper1 
+				System.out.println("IFSTMT " + RESULT);
+			:}
+			| IF simpleStmt:simplestmt  SEMI_COLON  expression:e block:b ifStmtHelper1:st1 
 			{:		
-				
-				:}; 
+				RESULT = simplestmt + e + b + st1;
+			
+			:}; 
 
 
-ifStmtHelper1 ::=  ELSE ifStmt 
+ifStmtHelper1 ::=  ELSE ifStmt:is
 				{:
+					RESULT = is;
 				
 				:}
-				| ELSE block
+				| ELSE block:b
 				{:
+					RESULT =  b;
+					System.out.println("ELSEE " + b);
+				// 	RESULT = "Goto " + "L"+ Constants.lCounter++ + "\n" + b;
+				// System.out.println("IFSTMTHELPER1  " + RESULT);
+
+
 				
 				:}
 				 | {:

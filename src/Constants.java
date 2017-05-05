@@ -13,6 +13,7 @@ class SingleExpression {
 public class Constants {
 	static int tCounter = 0;
 	static Queue<SingleExpression> exQueue = new LinkedList<SingleExpression>();
+	static int lCounter = 0;
 	public Constants(){
 	};
 	

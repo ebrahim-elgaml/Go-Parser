@@ -1,20 +1,20 @@
 s = "constant"
 main:
-begin_func;
-push_params: s
+nullbegin_func;
+push_params: snull
 t0= call Println
 pop_params;
 n = 5000
 t1 =3/n
 d = t1
-push_params: d
+push_params: dnull
 t2= call Println
 pop_params;
 t3 =n*2
 t4 =d-t3
 t5 =t4+d
 e = t5
-t6 =e!=5
+tnull = t6 =e!=5
 m = 16
 t7 =m>>2
 mShifted = t7

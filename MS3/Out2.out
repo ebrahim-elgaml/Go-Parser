@@ -1,0 +1,52 @@
+main:
+begin_func;
+IF t1 Goto L1
+t1 = 
+t0= 7%2
+==0
+begin_func;
+null
+null
+end_func;
+Goto L0
+begin_func;
+null
+null
+end_func;
+
+IF t1 Goto L2
+
+t6= t7&&t8
+t3 = 
+t2= 12%4
+==0
+t5 = 
+t4= 12%3
+==0
+
+begin_func;
+null
+null
+end_func;
+null
+num = 9
+t9 = num<0
+begin_func;
+null
+null
+end_func;
+IF t1 Goto L4
+t10 = num<10
+begin_func;
+null
+null
+end_func;
+Goto L3
+begin_func;
+null
+null
+end_func;
+
+null
+end_func;
+
