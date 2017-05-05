@@ -371,9 +371,10 @@ operand ::= literal:l
 					System.out.println("Operand" + RESULT);
 					
 				:}
-				| methodExpr | OPEN_PARAN expression CLOSE_PARAN
+				| methodExpr:m | OPEN_PARAN expression:e CLOSE_PARAN
 				{:
-				 	
+					RESULT = m + " " + e;
+					System.out.println("Operand" + RESULT);
 				:}; 	
 		  	 	 	 	  
 literal	::= basicLit:b
@@ -413,9 +414,9 @@ operandName ::=   IDENTIFIER:i
 				
 				:};
 
-qualifiedIdent ::=  DOT  packageName  DOT IDENTIFIER:i  
+qualifiedIdent ::=  DOT  packageName:p  DOT IDENTIFIER:i  
 				{:
-					RESULT = "push_params: " + "/n" + i + "/n" + "pop_params" + "/n"; 
+					RESULT = "packageName: " + p + " IDENTIFIER: " + i; 
 					System.out.println("qualifiedIdent "+ RESULT);
 				:};
 
