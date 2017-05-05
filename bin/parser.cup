@@ -78,7 +78,7 @@ functionType ::= FUNC signature:s
 					System.out.println("functionType" + RESULT);
 				:};
 
-signature ::= parameters:p result:r 
+signature ::= parameters result
 				{:
 					//RESULT= p;
 					//System.out.println("signature " + RESULT);
@@ -98,22 +98,35 @@ result ::= parameters
 parameters ::=  OPEN_PARAN parameterList:pl CLOSE_PARAN 
         		{:
         			RESULT= pl;
+        			System.out.println("PARAMETERS  " + RESULT);	
+
+
 				:}
 				|   OPEN_PARAN CLOSE_PARAN ;
 
-parameterList ::= parameterDecl parameterListHelper
-        {:
+parameterList ::= parameterDecl:pdecl parameterListHelper:phelper
+        		{:
+        			RESULT = pdecl + phelper;
+        			System.out.println("PARAMETERSLIST  " + RESULT);	
+
 				:};
 
-parameterListHelper ::= COMMA parameterDecl parameterListHelper
-        {:
+parameterListHelper ::= COMMA parameterDecl:pdecl parameterListHelper:phelper
+        {:	
+        		RESULT = pdecl + phelper;
+        		System.out.println("PARAMETERSLISTHELPERS  " + RESULT);	
+
 				 	
 				:}
  | ; 
 
-parameterDecl ::= identifierList CDOTS type | identifierList type
-   {:		 	
-		:};
+parameterDecl ::= identifierList CDOTS type | identifierList:il type:t
+  			 {:	
+  			 	RESULT = il + t;
+        		System.out.println("PARAMETERSDECL " + RESULT);	
+
+
+			:};
 
 methodName ::= IDENTIFIER
 			{:
@@ -192,7 +205,7 @@ constSpec ::= IDENTIFIER:i type EQUAL expression:e
 
 identifierList ::= IDENTIFIER:i identifierListHelper:ih
 				{:
-					RESULT = i;
+					RESULT = i + ih;
 				:};	
 
 identifierListHelper ::= COMMA IDENTIFIER identifierListHelper 
@@ -333,9 +346,9 @@ functionDecl ::= FUNC functionName:f function:fn
 				System.out.println("functionDecl" + RESULT);
 				 	
 				:}
-			 | FUNC functionName:f signature
+			 | FUNC functionName:f signature:sig
 			 {:
-			 	
+			 		RESULT = f + sig;
 				 	
 				:};	
 				
@@ -347,9 +360,9 @@ functionName ::= IDENTIFIER:i
 				:};	
 
 
-function ::= signature functionBody:fb
+function ::= signature:sig functionBody:fb
 				{:
-						RESULT = fb;
+						RESULT = sig +  fb;
 						System.out.println("function" + fb);
 				 	
 				:};	
@@ -528,9 +541,9 @@ simpleStmt ::=  shortVarDecl:svar
 				{:
 				 
 				:}
-				| assignment:assign
+				| assignment:assig
 				{:
-						RESULT = assign;
+						RESULT = assig;
 				
 				:}
 		
@@ -553,9 +566,9 @@ incDecStmt ::= expression INCREMENT
 				 	
 				:} ;
 
-assignment ::= expressionList assign_op expressionList
-          {:	
-          		
+assignment ::= expressionList:e1 assign_op:op expressionList:e2
+         	 {:	
+          			// RESULT = e1 + "=" + "t" + Constants.tCounter++ +  e1 + op + e2;
 				 
 				:} ;
           		}
