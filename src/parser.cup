@@ -1,0 +1,700 @@
+import java.io.*;
+import java_cup.runtime.*;
+
+
+/*
+parser code {:
+Constants();
+:};*/
+
+	
+	
+/* Terminals (tokens returned by the scanner). */
+terminal			IMPORT, PACKAGE, TYPE, STRUCT, VAR, ELSE, IF,RETURN, CONST, FUNC, EQUAL, FOR,
+					 SWITCH, DEFAULT,CASE  , REL_OP ,COMMA,SEMI_COLON ,COLON , PLUS ,SLASH ,OPEN_PARAN ,CLOSE_PARAN,
+					 OPEN_CURLY, CLOSE_CURLY ,OPEN_SQUARE,CLOSE_SQUARE ,DOT,PERCENT,ASTRISK ,MINUS, COLON_EQUAL, INCREMENT, AND_OP,
+					 AMBERSAND, BAR, EXCLAMATION, SHIFT_RIGHT, SHIFT_LEFT, LESS_DASH, OR_OP, DECREMENT, BREAK,CDOTS;
+
+terminal 	String IDENTIFIER, INT_LIT, STRING_LIT;
+
+/* Non-terminals */
+nonterminal	String sourceFile, packageClause,packageName, importDecl, importSpec, importPath, 
+type, typeName, typeLit, functionType, expression, signature, result,
+parameters, parameterList, parameterDecl,  methodName, block, statementList, declaration, topLevelDecl, constDecl, constSpec, identifierList, expressionList,
+ unaryExpr, varDecl,  varSpec, shortVarDecl, functionDecl,  functionName, function, functionBody, methodDecl, receiver, operand, literal, 
+  basicLit, operandName, qualifiedIdent, functionLit, primaryExpr, selector,
+ arguments, methodExpr, receiverType, statement, simpleStmt, expressionStmt, incDecStmt, assignment, assign_op, ifStmt, switchStmt, exprSwitchStmt, 
+ exprCaseClause, exprSwitchCase, forStmt, condition, forClause, initStmt, postStmt, returnStmt, breakStmt, parameterListHelper, constDeclHelper,
+ identifierListHelper, expressionListHelper, varDeclHelper, sourceFileHelper1, sourceFileHelper2 ,
+   ifStmtHelper1, exprSwitchStmtHelper ,exprSwitchStmtHelper1 , importDeclHelper;
+
+
+/* Precedences */
+/*
+precedence left OR_OP, AND_OP; 
+precedence left REL_OP;
+precedence left PLUS, MINUS, BAR;
+precedence left ASTRISK, SLASH, SHIFT_LEFT, SHIFT_RIGHT, PERCENT, AMBERSAND;
+precedence left EXCLAMATION, LESS_DASH;
+precedence left EQUAL, COMMA, SEMI_COLON;
+precedence left COLON;
+*/
+
+precedence left BAR,AMBERSAND, EXCLAMATION, DOT;
+precedence left PLUS,MINUS;
+precedence left SHIFT_LEFT,SHIFT_RIGHT;
+precedence left AND_OP,OR_OP;
+precedence left REL_OP;
+precedence left ASTRISK,SLASH,PERCENT;
+precedence left OPEN_PARAN, LESS_DASH, OPEN_SQUARE, OPEN_CURLY;
+precedence left PACKAGE,IMPORT,FUNC, TYPE, STRUCT, COLON_EQUAL;
+precedence left IDENTIFIER, STRING_LIT, INT_LIT, COMMA;
+
+
+start with sourceFile;
+
+/* The grammar */	
+
+type ::= typeName
+		{:
+		:}
+		|typeLit
+		{:
+		:}
+		;
+typeName ::= IDENTIFIER
+		{:
+		:}
+		;
+typeLit ::=  functionType:ft
+			{:
+				RESULT = ft;
+				System.out.println("typeLit" + RESULT);
+			:};
+
+functionType ::= FUNC signature:s
+				{:
+					RESULT = s;
+					System.out.println("functionType" + RESULT);
+				:};
+
+signature ::= parameters:p result:r 
+				{:
+					//RESULT= p;
+					//System.out.println("signature " + RESULT);
+				:}
+				| parameters:p
+				{:
+					RESULT= p;
+					System.out.println("signature " + RESULT);
+					
+				:};
+
+result ::= parameters 
+        {:
+				:}
+				| OPEN_PARAN type CLOSE_PARAN;
+
+parameters ::=  OPEN_PARAN parameterList:pl CLOSE_PARAN 
+        		{:
+        			RESULT= pl;
+				:}
+				|   OPEN_PARAN CLOSE_PARAN ;
+
+parameterList ::= parameterDecl parameterListHelper
+        {:
+				:};
+
+parameterListHelper ::= COMMA parameterDecl parameterListHelper
+        {:
+				 	
+				:}
+ | ; 
+
+parameterDecl ::= identifierList CDOTS type | identifierList type
+   {:		 	
+		:};
+
+methodName ::= IDENTIFIER
+			{:
+				 	
+			:};	
+
+block ::= OPEN_CURLY  statementList:s CLOSE_CURLY
+		{:
+				RESULT = "begin_func;" +  "\n" + s + "\n" + "end_func;" + "\n";
+				System.out.println("block" + RESULT);
+				
+				:};	
+
+statementList ::= statement:s statementList:st
+				{:
+					RESULT = s + "\n" + st;
+					System.out.println("statementList " + RESULT);
+				 	
+				:}
+				| {:
+				 	
+				:};
+
+declaration ::= constDecl:c SEMI_COLON 
+				{:
+					RESULT= c;
+					System.out.println("Declaration " + RESULT);
+					
+				:}
+				| varDecl:var SEMI_COLON
+				{:
+					RESULT = var;
+					System.out.println("varDeclaration " + RESULT);
+				 	
+				:};
+				
+topLevelDecl ::= declaration:d {:
+					RESULT= d;
+				:}
+				 | functionDecl SEMI_COLON
+				 {:
+				 	
+				:}
+				 | functionDecl:f {:
+				 	RESULT = f;
+				 	System.out.println("topLevelDecl2  " + RESULT);
+				:}
+				| methodDecl SEMI_COLON | methodDecl;			
+		
+		
+				
+constDecl ::= CONST constSpec:c
+			{:
+			RESULT = c;
+			System.out.println(RESULT);
+			
+			:}
+			| CONST OPEN_PARAN constDeclHelper CLOSE_PARAN;
+			
+constDeclHelper ::=  constSpec SEMI_COLON constDeclHelper | ;
+
+
+
+
+constSpec ::= IDENTIFIER:i type EQUAL expression:e
+			  {:
+			  		RESULT = i + "=" +e;
+			  		System.out.println(RESULT);
+				:}
+				| IDENTIFIER:i EQUAL:eq expression:e 
+				{:
+					RESULT = i + eq + e;
+				:}
+				| IDENTIFIER ;	
+
+
+identifierList ::= IDENTIFIER identifierListHelper
+				{:
+				:};	
+
+identifierListHelper ::= COMMA IDENTIFIER identifierListHelper 
+        {:
+				:}
+        |
+        {:
+				:};
+
+expressionList ::= expression expressionListHelper
+				{:
+				 					 
+				:};
+
+expressionListHelper ::= COMMA expression expressionListHelper 
+					{:
+				 	:}
+					| {:
+				 	:};
+
+expression ::= unaryExpr:u
+				{:
+					RESULT= u;
+					System.out.println("expression " + RESULT);
+				:}
+			 | expression:e1 REL_OP expression
+			 	{:
+			
+					
+				:}
+				| expression OR_OP expression
+			 	{:
+				
+				:}
+				| expression AND_OP expression
+			 	{:
+				 	
+				:}
+				| expression:e1 PLUS:pl expression:e2
+			 	{:
+			 		RESULT = "t" + Constants.tCounter + "= " +  e1 + pl + e2;
+					
+				:}
+				| expression:e1 MINUS:m expression:e2
+			 	{:
+					RESULT = "t" + Constants.tCounter + "= " +  e1 + m + e2 + "\n";
+				:}
+				| expression:e1 ASTRISK:ast  expression:e2
+			 	{:
+			 		RESULT = "t" + Constants.tCounter + "= " +  e1 + ast + e2 + "\n";
+			 		System.out.println("EXPRESSION101 " + RESULT);
+				:}
+				| expression:e1 SLASH:sl  expression:e2
+			 	{:
+			 		RESULT = "\n" + "t" + Constants.tCounter + "= " +  e1 + sl + e2 + "\n";
+			 		
+				:}
+				| expression PERCENT expression
+			 	{:
+			 		
+				:}
+				| expression:e1 SHIFT_RIGHT:sr expression:e2
+			 	{:
+			 		RESULT = "\n" + "t" + Constants.tCounter + "= " +  e1 + sr + e2 + "\n";
+			 		
+				:}
+				| expression SHIFT_LEFT  expression
+			 	{:
+				 	
+				:}
+				| expression  AMBERSAND expression
+			 	{:
+				 	
+				:}
+				
+				 | expression  EXCLAMATION expression
+			 	{:
+				 	
+				:}
+				 | expression EXCLAMATION EQUAL expression
+			 	{:
+				 	
+				:};	
+
+unaryExpr ::= primaryExpr:p
+			{:
+				RESULT =p;
+				System.out.println( "unaryExpr " + RESULT);
+			:}
+			| MINUS:m unaryExpr:um
+			{:	
+				RESULT = m + um + "\n";
+			:}
+			| EXCLAMATION unaryExpr
+			{:
+			:}
+			| ASTRISK unaryExpr
+			{: 	
+			:};
+
+varDecl	 ::= VAR varSpec:vs 
+			{: 		
+				RESULT = vs;
+				System.out.println("varDecl2 " + RESULT);
+			:}
+			| VAR OPEN_PARAN varDeclHelper CLOSE_PARAN;
+						
+varDeclHelper ::= varSpec SEMI_COLON varDeclHelper | ;
+
+varSpec ::= IDENTIFIER type | IDENTIFIER type EQUAL expression
+
+              {:
+              	
+					
+			       :}
+ 
+		  | IDENTIFIER:i EQUAL:eq expression:e
+		  {:
+		  	RESULT = i + eq +"t"+ Constants.tCounter++ + e ;
+		  	System.out.println("VARSPEC " + RESULT);
+			:}
+		  ;
+		  
+shortVarDecl ::= identifierList COLON_EQUAL expression
+				{:
+					
+				:};
+
+functionDecl ::= FUNC functionName:f function:fn
+			{:
+				RESULT = f + "\n" + fn;
+				System.out.println("functionDecl" + RESULT);
+				 	
+				:}
+			 | FUNC functionName:f signature
+			 {:
+			 	
+				 	
+				:};	
+				
+functionName ::= IDENTIFIER:i
+				{:
+					RESULT = i + ":";
+					System.out.println("functionNAme " + RESULT);
+				 	
+				:};	
+
+
+function ::= signature functionBody:fb
+				{:
+						RESULT = fb;
+						System.out.println("function" + fb);
+				 	
+				:};	
+
+functionBody ::= block:b
+			{:
+					RESULT = b;
+					System.out.println("functionBody" + b);
+				 
+				:};	
+
+methodDecl ::= FUNC receiver methodName function 
+			 | FUNC receiver methodName signature;
+			 
+receiver ::= parameters;
+
+operand ::= literal:l
+				{:
+					RESULT=l;
+					System.out.println(RESULT);
+				 	
+				:}	
+				| operandName:on
+				{:	
+					RESULT = on;
+					System.out.println("Operand" + RESULT);
+					
+				:}
+				| methodExpr | OPEN_PARAN expression CLOSE_PARAN
+				{:
+				 	
+				:}; 	
+		  	 	 	 	  
+literal	::= basicLit:b
+			{:
+				RESULT=b;
+				System.out.println(RESULT);
+				
+				 	
+			:}
+		 | functionLit;
+ 
+basicLit ::=  INT_LIT:i
+			{:
+				RESULT = i;
+				System.out.println("basicLIT INT " + RESULT);
+				 	
+				:}
+			  | STRING_LIT:s
+			{:
+				RESULT= s;
+				System.out.println("basciLIT" + RESULT);
+				  
+				:};	
+
+
+operandName ::=   IDENTIFIER:i
+				{:
+					RESULT = i;
+					System.out.println("OperandName " + RESULT);
+					//System.out.println("66666 "+ i);
+
+				:}
+				 | qualifiedIdent:q
+				{:
+					RESULT = q;
+					System.out.println("Operand Name qualifiedIdent "+ RESULT);
+				
+				:};
+
+qualifiedIdent ::=  DOT  packageName  DOT IDENTIFIER:i  
+				{:
+					RESULT = "push_params: " + "/n" + i + "/n" + "pop_params" + "/n"; 
+					System.out.println("qualifiedIdent "+ RESULT);
+				:};
+
+
+functionLit ::=  FUNC  function ;
+
+primaryExpr ::= operand:o
+				{:
+				 	RESULT= o;
+				 	System.out.println( "primaryExpr " + RESULT);
+				:}
+				 | primaryExpr selector 
+				 {:
+				 
+				:}
+				 
+				 | primaryExpr arguments
+				 {:
+				 
+					
+				:};
+
+selector ::=  DOT IDENTIFIER ;
+ 
+arguments ::=  OPEN_PARAN  TYPE  type  COMMA  expressionList   CLOSE_PARAN 
+				{:
+				
+				:}
+			 | OPEN_PARAN expressionList   CLOSE_PARAN 
+			 {:
+			
+				
+				:}
+			  |OPEN_PARAN  CLOSE_PARAN
+			 	{:
+			
+				:}
+			 ;
+			 			 
+methodExpr ::=  DOT  receiverType  DOT  methodName  
+				{:
+				
+				:};
+
+receiverType ::=  OPEN_PARAN ASTRISK typeName  CLOSE_PARAN  |  OPEN_PARAN  typeName  CLOSE_PARAN  ;
+
+statement ::=  declaration:d {:
+					RESULT = d;
+					System.out.println("Statement " + RESULT);
+				
+				:} | simpleStmt:simple  SEMI_COLON 
+				{:
+					RESULT = simple;
+					System.out.println("Simple STatement " + RESULT);
+					
+				 
+				:}
+				 | returnStmt:rt  SEMI_COLON  
+				 {:		
+				 RESULT = rt;
+				 System.out.println("ReturnStatement " + RESULT);	
+				
+				:}  
+			 | breakStmt  SEMI_COLON | block   | block  SEMI_COLON   
+			 | ifStmt 
+			 {:		
+			 	
+				:}
+			 | ifStmt   SEMI_COLON 
+			 {:		
+			 		
+				:}  
+		     | switchStmt
+		     {:		
+			 	
+			 :}  
+		     | switchStmt  SEMI_COLON   
+		     {:		
+			 	
+			 :}  
+		     | forStmt
+		     {:		
+			 		
+				:}  
+		     | forStmt  SEMI_COLON   
+		     {:		
+			 		
+				:} ;
+
+simpleStmt ::=  shortVarDecl
+		 {:
+				 
+				:}| expressionStmt:ex
+				{:
+					RESULT = ex;
+					System.out.println("Simple Statement Expression" + RESULT);
+				 
+				:} |incDecStmt
+				{:
+				 
+				:}
+				| assignment
+				{:
+				
+				:}
+		
+		  ;
+
+expressionStmt ::= expression:e
+				{:
+					RESULT = e;
+					System.out.println("expressionStmt Expression" + RESULT);
+
+				 
+				:};
+
+incDecStmt ::= expression INCREMENT
+                      {:
+				 	
+				:} 
+				| expression DECREMENT 
+				   {:
+				 	
+				:} ;
+
+assignment ::= expressionList assign_op expressionList
+          {:
+				 
+				:} ;
+ 
+assign_op ::=   EQUAL | PLUS EQUAL | MINUS EQUAL | ASTRISK EQUAL | SLASH EQUAL | SHIFT_RIGHT EQUAL | SHIFT_LEFT EQUAL;
+
+ifStmt ::=  IF   expression block ifStmtHelper1
+			{:		
+				
+				
+				
+				
+				
+					
+				:}
+			| IF simpleStmt  SEMI_COLON  expression block ifStmtHelper1 
+			{:		
+				
+				:}; 
+
+
+ifStmtHelper1 ::=  ELSE ifStmt 
+				{:
+				
+				:}
+				| ELSE block
+				{:
+				
+				:}
+				 | {:
+					
+				:}  ;
+
+
+		  
+switchStmt  ::= exprSwitchStmt
+                 {:
+				
+				:} ;
+
+exprSwitchStmt ::=  SWITCH  exprSwitchStmtHelper  OPEN_CURLY exprSwitchStmtHelper1  CLOSE_CURLY 
+                     {:
+    
+				:};
+
+exprSwitchStmtHelper ::= simpleStmt  SEMI_COLON
+                           {:
+					
+				:}
+ |simpleStmt  SEMI_COLON expression
+  {:
+				
+				:}
+ | expression 
+ {:
+				
+:}
+ |;
+
+exprSwitchStmtHelper1 ::= exprCaseClause exprSwitchStmtHelper1 
+                   {: 
+                   
+					
+				   :}| 
+				   {: 
+                   
+				   :}
+				   ;
+
+exprCaseClause ::= exprSwitchCase COLON  statementList
+                   {:
+					
+				   :}; 
+
+exprSwitchCase ::=  CASE  expressionList
+				{:
+				    
+				
+					
+				   :}
+				 |  DEFAULT
+				 {:
+				
+				   :};
+
+forStmt ::=  FOR forClause block  
+			 {:	
+			 	
+				   :};
+
+forClause ::= initStmt SEMI_COLON  expression  SEMI_COLON  postStmt
+			 {:		
+					:};
+
+initStmt ::= simpleStmt
+			{:
+				
+			:};
+
+postStmt ::= simpleStmt 
+			{:
+				
+			:} ;	
+		   		   
+returnStmt ::= RETURN expressionList 
+				{:
+				
+				:}
+				| RETURN;
+
+breakStmt ::= BREAK;	
+
+sourceFile ::= packageClause SEMI_COLON sourceFileHelper1 sourceFileHelper2:s2
+			  {:
+				RESULT =  s2;
+				System.out.println("SOURCEFILE2 " + RESULT);
+				:}
+			 | packageClause sourceFileHelper1 sourceFileHelper2:s2
+			 {:
+				RESULT =  s2;
+				System.out.println("SOURFILE2 " + RESULT);
+				:} ;
+			 
+sourceFileHelper1 ::=  importDecl SEMI_COLON sourceFileHelper1
+					| importDecl sourceFileHelper1 | ;
+					
+sourceFileHelper2 ::= topLevelDecl:t sourceFileHelper2:s 
+				{:
+					RESULT= t + "\n" +s;
+					System.out.println("SOURCEHELPER2 " + RESULT + " OK ");
+				
+				:}
+				|{:
+					RESULT= "";
+				:} ;
+
+
+packageClause ::= PACKAGE packageName 
+				{:
+				
+				:};
+packageName ::= IDENTIFIER 
+				{:
+				 	
+				:};	
+importDecl	::= IMPORT importSpec | IMPORT OPEN_PARAN importDeclHelper CLOSE_PARAN ;
+
+importDeclHelper ::= importSpec importDeclHelper | importSpec SEMI_COLON importDeclHelper | ;
+
+importSpec ::= importPath | DOT importPath | packageName importPath ;	
+				
+importPath ::= STRING_LIT
+				{:
+					
+				:}
+				; 		 	 	 	  

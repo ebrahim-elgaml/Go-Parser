@@ -1,0 +1,161 @@
+import java.lang.System;
+import java.io.*;
+import java.util.Stack;
+import java_cup.runtime.Symbol;
+%%
+%class Lexer
+
+%implements java_cup.runtime.Scanner
+%function next_token
+%type java_cup.runtime.Symbol
+%char
+%line
+
+
+%{
+Stack<String> brackets = new Stack<String>();
+String finalMsg= "Done";
+	//initialize  variables to be used by class
+%}
+
+
+%init{
+
+//Add code to be executed on initialization of the lexer
+
+%init}
+STRING_LIT=(\"(\\\"|[^\"\n])*\"|\`(\\\`|[^\`\n])*\`)
+s=(" "|\t)
+PACKAGE=(package+{s}*)
+IMPORT =(import)
+TYPE=(type)
+STRUCT=(struct)
+VAR =(var)
+ELSE =(else)
+IF =(if)
+RETURN=(return)
+CONST=(const)
+FUNC=(func)
+EQUAL = =
+FOR=(for)
+INT_LIT =([0-9]+)
+COMMENT=(//(.)*)
+SWITCH=(switch)
+BREAK =(break)
+DEFAULT=(default)
+CASE=(case)
+WHITE_SPACE_CHAR=[\n\ \t\b]
+//IDENTIFIER=([a-zA-Z ^\n ^\t])+
+IDENTIFIER=([^\` ^\"]|([A-Za-z]*[0-9]*))
+
+
+
+
+
+%eofval{
+//Add code to be executed when the end of the file is reached
+return (new Symbol(sym.EOF, finalMsg));
+%eofval}
+
+
+%%
+<YYINITIAL> {PACKAGE} {return (new Symbol(sym.PACKAGE,yytext().trim()));}
+<YYINITIAL> {STRING_LIT} {return (new Symbol(sym.STRING_LIT,yytext()));}
+<YYINITIAL> {IMPORT} {return (new Symbol(sym.IMPORT,yytext()));}
+<YYINITIAL> {VAR} {return (new Symbol(sym.VAR,yytext()));}
+<YYINITIAL> {CONST} {return (new Symbol(sym.CONST,yytext()));}
+<YYINITIAL> {FUNC} {return (new Symbol(sym.FUNC,yytext()));}
+<YYINITIAL> {IF} {return (new Symbol(sym.IF,yytext()));}
+<YYINITIAL> {ELSE} {return (new Symbol(sym.ELSE,yytext()));}
+<YYINITIAL> "==" {return (new Symbol(sym.REL_OP,yytext()));}
+<YYINITIAL> ">" {return (new Symbol(sym.REL_OP,yytext()));}
+<YYINITIAL> ">>" {return (new Symbol(sym.SHIFT_RIGHT,yytext()));}
+<YYINITIAL> "<<" {return (new Symbol(sym.SHIFT_LEFT ,yytext()));}
+<YYINITIAL> "<" {return (new Symbol(sym.REL_OP,yytext()));}
+<YYINITIAL> ">=" {return (new Symbol(sym.REL_OP,yytext()));}
+<YYINITIAL> "<=" {return (new Symbol(sym.REL_OP,yytext()));}
+<YYINITIAL> "," {return (new Symbol(sym.COMMA,yytext()));}
+<YYINITIAL> ";" {return (new Symbol(sym.SEMI_COLON,yytext()));}
+<YYINITIAL> ":=" {return (new Symbol(sym.COLON_EQUAL,yytext()));}
+<YYINITIAL> "&&" {return (new Symbol(sym.AND_OP,yytext()));}
+<YYINITIAL> "&" {return (new Symbol(sym.AMBERSAND,yytext()));}
+<YYINITIAL> "||" {return (new Symbol(sym.OR_OP,yytext()));}
+<YYINITIAL> "|" {return (new Symbol(sym.BAR,yytext()));}
+<YYINITIAL> "!" {return (new Symbol(sym.EXCLAMATION,yytext()));}
+<YYINITIAL> "<-" {return (new Symbol(sym.LESS_DASH,yytext()));}
+<YYINITIAL> "--" {return (new Symbol(sym.DECREMENT,yytext()));}
+<YYINITIAL> "++" {return (new Symbol(sym.INCREMENT,yytext()));}
+<YYINITIAL> "+" {return (new Symbol(sym.PLUS,yytext()));}
+<YYINITIAL> {RETURN} {return (new Symbol(sym.RETURN,yytext()));}
+<YYINITIAL> {EQUAL} {return (new Symbol(sym.EQUAL,yytext()));}
+<YYINITIAL> {FOR} {return (new Symbol(sym.FOR,yytext()));}
+<YYINITIAL> {COMMENT} {}
+<YYINITIAL> {SWITCH} {return (new Symbol(sym.SWITCH,yytext()));}
+<YYINITIAL> {STRUCT} {return (new Symbol(sym.STRUCT,yytext()));}
+<YYINITIAL> {TYPE} {return (new Symbol(sym.TYPE,yytext()));}
+<YYINITIAL> {BREAK} {return (new Symbol(sym.BREAK,yytext()));}
+<YYINITIAL> {DEFAULT} {return (new Symbol(sym.DEFAULT,yytext()));}
+<YYINITIAL> {CASE} {return (new Symbol(sym.CASE,yytext()));}
+<YYINITIAL> "(" {
+brackets.push("(");
+return (new Symbol(sym.OPEN_PARAN ,yytext()));}
+<YYINITIAL> ")" {
+if (brackets.peek().equals("(")){
+brackets.pop();
+return (new Symbol(sym.CLOSE_PARAN,yytext()));
+}
+else {
+	finalMsg=" There is some "+brackets.peek()+" that is not closed";
+	int sum = yyline+1;
+  return new Symbol(sym.error, ": You have a missing bracket in line "+sum);
+
+}
+}
+<YYINITIAL> "{" {
+brackets.push("{"); return (new Symbol(sym.OPEN_CURLY,yytext()));}
+
+<YYINITIAL> "}" {
+if (brackets.peek().equals("{")){
+brackets.pop();
+return (new Symbol(sym.CLOSE_CURLY,yytext()));
+}
+else {
+finalMsg=" There is some "+brackets.peek()+" that is not closed";
+int sum = yyline+1;
+  return new Symbol(sym.error, ": You have a missing bracket in line "+sum);
+
+}
+}
+<YYINITIAL> "[" {
+brackets.push("[");
+return (new Symbol(sym.OPEN_SQUARE,yytext()));}
+
+<YYINITIAL> "]" {
+if (brackets.peek().equals("[")){
+brackets.pop();
+return (new Symbol(sym.CLOSE_SQUARE,yytext()));}
+else {
+finalMsg=" There is some "+brackets.peek()+" that is not closed";
+int sum = yyline+1;
+  return new Symbol(sym.error, ": You have a missing bracket in line "+sum);
+}
+}
+
+<YYINITIAL> "..." {return (new Symbol(sym.CDOTS,yytext()));}
+
+<YYINITIAL> "." {return (new Symbol(sym.DOT,yytext()));}
+<YYINITIAL> "%" {return (new Symbol(sym.PERCENT,yytext()));}
+<YYINITIAL> ":" {return (new Symbol(sym.COLON,yytext()));}
+<YYINITIAL> "*" {return (new Symbol(sym.ASTRISK,yytext()));}
+<YYINITIAL> "-" {return (new Symbol(sym.MINUS,yytext()));}
+<YYINITIAL> "/" {return (new Symbol(sym.SLASH,yytext()));}
+<YYINITIAL> {INT_LIT} {return (new Symbol(sym.INT_LIT,yytext()));}
+<YYINITIAL> {WHITE_SPACE_CHAR} {}
+<YYINITIAL> {IDENTIFIER} {return (new Symbol(sym.IDENTIFIER,yytext()));}
+
+
+
+<YYINITIAL> . {
+int sum = yyline+1;
+  return new Symbol(sym.error, "Invalid input: " + yytext()+"in line "+sum);
+}

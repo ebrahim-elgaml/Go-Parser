@@ -1,0 +1,20 @@
+s="constant"
+main:
+begin_func;
+null
+n=5000
+d=t1
+t1= 3/n
+
+null
+e=t2t2= t2= d-t2= n*2
+
++d
+null
+m=16
+mShifted=t3
+t3= m>>2
+
+null
+end_func;
+
