@@ -8,7 +8,7 @@ public class Constants {
 	static ArrayList<String> func= new ArrayList<String>();
 	static String case1="";
 	static int extra=0;
-	static int tCounter = 1;
+	static int tCounter = 0;
 	static int tInit = -1;
 	static int countT =0;
 	static int counterT =1;

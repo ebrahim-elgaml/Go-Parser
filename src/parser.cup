@@ -190,8 +190,9 @@ constSpec ::= IDENTIFIER:i type EQUAL expression:e
 				| IDENTIFIER ;	
 
 
-identifierList ::= IDENTIFIER identifierListHelper
+identifierList ::= IDENTIFIER:i identifierListHelper:ih
 				{:
+					RESULT = i;
 				:};	
 
 identifierListHelper ::= COMMA IDENTIFIER identifierListHelper 
@@ -201,9 +202,9 @@ identifierListHelper ::= COMMA IDENTIFIER identifierListHelper
         {:
 				:};
 
-expressionList ::= expression expressionListHelper
+expressionList ::= expression:e expressionListHelper:eh
 				{:
-				 					 
+				 		RESULT = e + eh;			 
 				:};
 
 expressionListHelper ::= COMMA expression expressionListHelper 
@@ -219,7 +220,8 @@ expression ::= unaryExpr:u
 				:}
 			 | expression:e1 REL_OP:rel expression:e2 
 			 	{:
-					RESULT =   "t" + Constants.counterT + " =" + "t" + Constants.countT + rel + e2 +  e1 + "\n";
+
+					RESULT =   "t" + Constants.tCounter++ + " = " +  e1 + rel + e2 + "\n";
 			 		System.out.println("EXPRESSION REL " + RESULT);
 
 					
@@ -228,38 +230,39 @@ expression ::= unaryExpr:u
 			 	{:
 				
 				:}
-				| expression AND_OP expression
+				| expression:e1 AND_OP:and  expression:e2
 			 	{:
-				 	
+					RESULT = "\n" + "t" + Constants.tCounter++ + "= " + "t" + Constants.tCounter++  + and + "t" + Constants.tCounter++ + "\n" +e1  + e2 + "\n";
+
 				:}
 				| expression:e1 PLUS:pl expression:e2
 			 	{:
-			 		RESULT = "t" + Constants.tCounter + "= " +  e1 + pl + e2;
+			 		RESULT = "t" + Constants.tCounter++ + "= " +  e1 + pl + e2;
 					
 				:}
 				| expression:e1 MINUS:m expression:e2
 			 	{:
-					RESULT = "t" + Constants.tCounter + "= " +  e1 + m + e2 + "\n";
+					RESULT = "t" + Constants.tCounter++ + "= " +  e1 + m + e2 + "\n";
 				:}
 				| expression:e1 ASTRISK:ast  expression:e2
 			 	{:
-			 		RESULT = "t" + Constants.tCounter + "= " +  e1 + ast + e2 + "\n";
+			 		RESULT = "t" + Constants.tCounter++ + "= " +  e1 + ast + e2 + "\n";
 			 		System.out.println("EXPRESSION101 " + RESULT);
 				:}
 				| expression:e1 SLASH:sl  expression:e2
 			 	{:
-			 		RESULT = "\n" + "t" + Constants.tCounter + "= " +  e1 + sl + e2 + "\n";
+			 		RESULT = "\n" + "t" + Constants.tCounter++ + "= " +  e1 + sl + e2 + "\n";
 			 		
 				:}
 				| expression:e1 PERCENT:per expression:e2
 			 	{:
-			 		RESULT = "\n" + "t" + Constants.countT + "= " +  e1 + per + e2 + "\n";
+			 		RESULT = "\n" + "t" + Constants.tCounter++ + "= " +  e1 + per + e2 + "\n";
 			 		System.out.println("PERCENT EXPRESSION " + RESULT);
 			 		
 				:}
 				| expression:e1 SHIFT_RIGHT:sr expression:e2
 			 	{:
-			 		RESULT = "\n" + "t" + Constants.tCounter + "= " +  e1 + sr + e2 + "\n";
+			 		RESULT = "\n" + "t" + Constants.tCounter++ + "= " +  e1 + sr + e2 + "\n";
 			 		
 				:}
 				| expression SHIFT_LEFT  expression
@@ -319,9 +322,9 @@ varSpec ::= IDENTIFIER type | IDENTIFIER type EQUAL expression
 			:}
 		  ;
 		  
-shortVarDecl ::= identifierList COLON_EQUAL expression
+shortVarDecl ::= identifierList:il COLON_EQUAL:c expression:e
 				{:
-					
+					RESULT = il + " = " + e + "\n";
 				:};
 
 functionDecl ::= FUNC functionName:f function:fn
@@ -513,9 +516,9 @@ statement ::=  declaration:d {:
 			 		
 				:} ;
 
-simpleStmt ::=  shortVarDecl
+simpleStmt ::=  shortVarDecl:svar
 		 {:
-				 
+					RESULT = svar; 
 				:}| expressionStmt:ex
 				{:
 					RESULT = ex;
@@ -525,8 +528,9 @@ simpleStmt ::=  shortVarDecl
 				{:
 				 
 				:}
-				| assignment
+				| assignment:assign
 				{:
+						RESULT = assign;
 				
 				:}
 		
@@ -550,9 +554,11 @@ incDecStmt ::= expression INCREMENT
 				:} ;
 
 assignment ::= expressionList assign_op expressionList
-          {:
+          {:	
+          		
 				 
 				:} ;
+          		}
  
 assign_op ::=   EQUAL | PLUS EQUAL | MINUS EQUAL | ASTRISK EQUAL | SLASH EQUAL | SHIFT_RIGHT EQUAL | SHIFT_LEFT EQUAL;
 
@@ -566,15 +572,16 @@ ifStmt ::=  IF   expression:e block:b ifStmtHelper1:ifhelper
 				
 					
 				:}
-			| IF simpleStmt  SEMI_COLON  expression block ifStmtHelper1 
+			| IF simpleStmt:simplestmt  SEMI_COLON  expression:e block:b ifStmtHelper1:st1 
 			{:		
-
+				RESULT = simplestmt + e + b + st1;
 				
 				:}; 
 
 
-ifStmtHelper1 ::=  ELSE ifStmt 
+ifStmtHelper1 ::=  ELSE ifStmt:is
 				{:
+					RESULT = is;
 				
 				:}
 				| ELSE block:b
