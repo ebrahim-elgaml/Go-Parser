@@ -1,0 +1,26 @@
+main:
+begin_func;
+IF t1 Goto L1
+t1 =t0==0
+t0= 7%2
+
+begin_func;
+null
+null
+end_func;
+Goto L0
+begin_func;
+null
+null
+end_func;
+
+IF t1 Goto L2
+nullbegin_func;
+null
+null
+end_func;
+null
+null
+null
+end_func;
+
