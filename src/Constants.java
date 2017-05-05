@@ -5,9 +5,15 @@ import java.util.Queue;
 class SingleExpression {
 	String head;
 	String body;
+	boolean isMohsen = false;
+	
 	public SingleExpression(String head, String body) {
 		this.head = head;
 		this.body = body;
+	}
+	
+	public String toString() {
+		return "head: " + this.head +", body: " +this.body;
 	}
 }
 public class Constants {

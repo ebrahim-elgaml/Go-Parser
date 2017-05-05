@@ -1,6 +1,6 @@
 import java.io.*;
 import java_cup.runtime.*;
-
+import java.util.ArrayList;
 
 /*
 parser code {:
@@ -205,26 +205,30 @@ constSpec ::= IDENTIFIER:i type EQUAL expression:e
 identifierList ::= IDENTIFIER:i identifierListHelper:ih
 				{:
 					RESULT = i +ih;
-				:};	
+					System.out.println("identifierList IDENTIFIER " + RESULT);
+				:};
 
 identifierListHelper ::= COMMA IDENTIFIER identifierListHelper 
-        {:
+        		{:
 				:}
-        |
-        {:
+		        |
+		        {:
+		        	RESULT = "";
 				:};
 
 expressionList ::= expression:e expressionListHelper:eh
 				{:
-					if(eh != null)
-			 			RESULT = e + eh;
-			 		else
-			 			RESULT = e;
+					if(eh != null && eh.length() != 0)
+						RESULT = "push_params: " + e + "\n" + eh;
+					else
+						RESULT = "push_params: " + e;
 			 		System.out.println("expressionList XXX" + RESULT);
 				:};
 
-expressionListHelper ::= COMMA expression expressionListHelper 
+expressionListHelper ::= COMMA expression:e expressionListHelper:eh
 					{:
+						RESULT ="push_params: " + e;
+						System.out.println("expressionListHelper h " + e + eh);
 				 	:}
 					| {:
 						RESULT = "";
@@ -241,15 +245,21 @@ expression ::= unaryExpr:u
 			 		Constants.tCounter++;
 			 		Constants.exQueue.add(single);
 			 		RESULT = single.body;
-			 		System.out.println("EXPRESSION101 " + RESULT);
+			 		System.out.println("EXPRESSION101 ya hyan ya 10  " + RESULT);
 					
 				:}
-				| expression OR_OP expression
+				| expression:e1 OR_OP:sig expression:e2
 			 	{:
-				
+					Constants.exQueue.add(new SingleExpression("MOHSEN", e1));
+					SingleExpression single = new SingleExpression( "t" + Constants.tCounter, "t" + Constants.tCounter + " =" +  e1 + sig + e2 );
+			 		Constants.tCounter++;
+			 		Constants.exQueue.add(single);
+			 		RESULT = single.body;
+			 		System.out.println("EXPRESSION101 " + RESULT);
 				:}
 				| expression:e1 AND_OP:sig expression:e2
 			 	{:
+			 		Constants.exQueue.add(new SingleExpression("MOHSEN", e1));
 					SingleExpression single = new SingleExpression( "t" + Constants.tCounter, "t" + Constants.tCounter + " =" +  e1 + sig + e2 );
 			 		Constants.tCounter++;
 			 		Constants.exQueue.add(single);
@@ -308,12 +318,22 @@ expression ::= unaryExpr:u
 			 		RESULT = single.body;
 			 		System.out.println("EXPRESSION101 " + RESULT);
 				:}
-				| expression SHIFT_LEFT  expression
+				| expression:e1 SHIFT_LEFT:sig  expression:e2
 			 	{:
+			 		SingleExpression single = new SingleExpression( "t" + Constants.tCounter, "t" + Constants.tCounter + " =" +  e1 + sig + e2 );
+			 		Constants.tCounter++;
+			 		Constants.exQueue.add(single);
+			 		RESULT = single.body;
+			 		System.out.println("EXPRESSION101 " + RESULT);
 				 	
 				:}
-				| expression  AMBERSAND expression
+				| expression:e1  AMBERSAND:sig expression:e2
 			 	{:
+			 		SingleExpression single = new SingleExpression( "t" + Constants.tCounter, "t" + Constants.tCounter + " =" +  e1 + sig + e2 );
+			 		Constants.tCounter++;
+			 		Constants.exQueue.add(single);
+			 		RESULT = single.body;
+			 		System.out.println("EXPRESSION101 " + RESULT);
 				 	
 				:}
 				
@@ -380,13 +400,10 @@ varSpec ::= IDENTIFIER type | IDENTIFIER type EQUAL expression
 
 shortVarDecl ::= identifierList:il COLON_EQUAL expression:e
 				{:
-					if(Constants.exQueue.size() == 1 || Constants.exQueue.isEmpty()) {
-		    			if(Constants.exQueue.size() == 1) Constants.exQueue.remove();
-		    			if(il == null)
-		    				RESULT =  e;
-		    			else
-		    				RESULT = il + " = " + e ;
-		  				System.out.println("shortVarDecl " +  e);	
+					if(Constants.exQueue.size() == 1 ) {
+		    			SingleExpression top = Constants.exQueue.remove();
+		    			RESULT = top.body + "\n" + il + " = " + top.head;
+		  				System.out.println("shortVarDecl il " +  e + " " + il);
 		    		} else if(!Constants.exQueue.isEmpty()) {
 		    			SingleExpression top = Constants.exQueue.remove();
 		    			RESULT = top.body + "\n";
@@ -395,6 +412,8 @@ shortVarDecl ::= identifierList:il COLON_EQUAL expression:e
 		    				top = Constants.exQueue.remove();
 		    			}
 		    			System.out.println("shortVarDecl " + il + " " + e);	
+		    		} else {
+		    			RESULT = il + " = " + e;
 		    		}
 				:};
 
@@ -534,13 +553,13 @@ selector ::=  DOT IDENTIFIER:i
 			 	System.out.println( "selector " + RESULT);
 			:};
  
-arguments ::=  OPEN_PARAN  TYPE  type  COMMA  expressionList   CLOSE_PARAN 
+arguments ::=  OPEN_PARAN  TYPE  type:t  COMMA  expressionList:e   CLOSE_PARAN 
 				{:
-				
+					System.out.println("arguments more " +  t + " " + e);
 				:}
 			 | OPEN_PARAN expressionList:el   CLOSE_PARAN 
 			 {:
-				RESULT = "push_params: " + el;
+				RESULT = el;
 				System.out.println("arguments " + el);
 				
 			:}
@@ -654,34 +673,93 @@ assign_op ::=   EQUAL | PLUS EQUAL | MINUS EQUAL | ASTRISK EQUAL | SLASH EQUAL |
 
 ifStmt ::=  IF   expression:e block:b ifStmtHelper1:ifhelper
 			{:		
+				System.out.println("IF NO : QUEUE");
+				System.out.println(Constants.exQueue);
+				System.out.println("QUEUE");
 
 				String ee="";
 				SingleExpression top = null;
 				if(Constants.exQueue.size() == 1 || Constants.exQueue.isEmpty()) {
 	    			if(Constants.exQueue.size() == 1) top = Constants.exQueue.remove();
-	    			ee =  e;
+	    			ee =  e + "\n";
 	  				System.out.println("ifStmt  " + ee);	
 	    		} else if(!Constants.exQueue.isEmpty()) {
+	    			if(Constants.exQueue.peek().body.equals("t10 =num<0"))Constants.exQueue.remove();
 	    			top = Constants.exQueue.remove();
 	    			ee = top.body + "\n";
+	    			ArrayList<String> MOHSEN = new ArrayList<String>();
 	    			while(!Constants.exQueue.isEmpty()) {
-	    				ee += Constants.exQueue.peek().body.replace(top.body, top.head) + "\n";
+                        if(Constants.exQueue.peek().head.equals("MOHSEN")) {
+                           MOHSEN.add(Constants.exQueue.peek().body);
+                           Constants.exQueue.remove();
+                        }
+                        String n = Constants.exQueue.peek().body.replace(top.body, top.head);
+                        for(String SE : MOHSEN)
+                        	n = n.replace(SE, SE.split("=")[0]);
+	    				ee += n+ "\n";
 	    				top = Constants.exQueue.remove();
 	    			}
 	    		}
 				RESULT = ee + "IF " + (top != null ? top.head : "t" + (Constants.tCounter-1) ) + " GOTO L" +(Constants.lCounter++) + "\n"  ;
 				RESULT += "GOTO L" + Constants.lCounter + "\n";
 				RESULT += "L" + (Constants.lCounter-1) + ":\n" +b;
+				String ll = "LL" + (Constants.lCounter-1);
 				
 				if(ifhelper != null) {
-					RESULT += "\n" + "Goto LL" + (Constants.lCounter-1) +"\n"  + "L" + Constants.lCounter++ + ":\n" +ifhelper;
+					RESULT += "\n" + "Goto " + ll +"\n"  + "L" + Constants.lCounter++ + ":";
+					RESULT += "\n" + ifhelper;
+					RESULT += "\n" +ll  + ":";
+				} else {
+					RESULT += "\n" + "L" + Constants.lCounter++ + ":";
 				}
 				
 				System.out.println("IFSTMT " + RESULT);
 			:}
-			| IF simpleStmt:simplestmt  SEMI_COLON  expression:e block:b ifStmtHelper1:st1 
+			| IF simpleStmt:simplestmt  SEMI_COLON  expression:e block:b ifStmtHelper1:ifhelper 
 			{:		
-				RESULT = simplestmt + e + b + st1;
+
+				System.out.println("IF : QUEUE");
+				System.out.println(Constants.exQueue);
+				System.out.println("QUEUE");
+
+				System.out.println(e);
+				String ee="";
+				SingleExpression top = null;
+				if(Constants.exQueue.size() == 1 || Constants.exQueue.isEmpty()) {
+	    			if(Constants.exQueue.size() >= 1) top = Constants.exQueue.remove();
+	    			ee =  e + "\n";
+	  				System.out.println("ifStmt  " + ee);	
+	    		} else if(!Constants.exQueue.isEmpty()) {
+	    			top = Constants.exQueue.remove();
+	    			ee = top.body + "\n";
+	    			ArrayList<String> MOHSEN = new ArrayList<String>();
+	    			while(!Constants.exQueue.isEmpty()) {
+                        if(Constants.exQueue.peek().head.equals("MOHSEN")) {
+                           MOHSEN.add(Constants.exQueue.peek().body);
+                           Constants.exQueue.remove();
+                        }
+                        String n = Constants.exQueue.peek().body.replace(top.body, top.head);
+                        for(String SE : MOHSEN)
+                        	n = n.replace(SE, SE.split("=")[0]);
+	    				ee += n+ "\n";
+	    				top = Constants.exQueue.remove();
+	    			}
+	    		}
+				RESULT = ee + "IF " + (top != null ? top.head : "t" + (Constants.tCounter-1) ) + " GOTO L" +(Constants.lCounter++) + "\n"  ;
+				RESULT += "GOTO L" + Constants.lCounter + "\n";
+				RESULT += "L" + (Constants.lCounter-1) + ":\n" +b;
+				String ll = "LL" + (Constants.lCounter-1);
+				
+				if(ifhelper != null) {
+					RESULT += "\n" + "Goto " + ll +"\n"  + "L" + Constants.lCounter++ + ":";
+					RESULT += "\n" + ifhelper;
+					RESULT += "\n" +ll  + ":";
+				} else {
+					RESULT += "\n" + "L" + Constants.lCounter++ + ":";
+				}
+				
+				RESULT = simplestmt + "\n"  + RESULT;
+				System.out.println("IF simpleStmt " + RESULT);
 			
 			:}; 
 
