@@ -120,7 +120,11 @@ parameterListHelper ::= COMMA parameterDecl:pdecl parameterListHelper:phelper
 				:}
  | ; 
 
-parameterDecl ::= identifierList CDOTS type | identifierList:il type:t
+parameterDecl ::= identifierList CDOTS type 
+					{:
+						:}
+				| identifierList:il type:t
+  			 
   			 {:	
   			 	RESULT = il + t;
         		System.out.println("PARAMETERSDECL " + RESULT);	
@@ -193,7 +197,7 @@ constDeclHelper ::=  constSpec SEMI_COLON constDeclHelper | ;
 
 constSpec ::= IDENTIFIER:i type EQUAL expression:e
 			  {:
-			  		RESULT = i + "=" +e;
+			  		RESULT = i + "=" + e;
 			  		System.out.println(RESULT);
 				:}
 				| IDENTIFIER:i EQUAL:eq expression:e 
@@ -205,7 +209,7 @@ constSpec ::= IDENTIFIER:i type EQUAL expression:e
 
 identifierList ::= IDENTIFIER:i identifierListHelper:ih
 				{:
-					RESULT = i +ih;
+					RESULT = i + ih;
 				:};	
 
 identifierListHelper ::= COMMA IDENTIFIER identifierListHelper 
@@ -217,13 +221,15 @@ identifierListHelper ::= COMMA IDENTIFIER identifierListHelper
 
 expressionList ::= expression:e expressionListHelper:eh
 				{:
-				 		RESULT = e ;			 
+				 		RESULT = e + eh ;			 
 				:};
 
-expressionListHelper ::= COMMA expression expressionListHelper 
+expressionListHelper ::= COMMA:c expression:e expressionListHelper
 					{:
+						RESULT = c + e;
 				 	:}
 					| {:
+						RESULT = " ";
 				 	:};
 
 expression ::= unaryExpr:u
@@ -335,9 +341,9 @@ varSpec ::= IDENTIFIER type | IDENTIFIER type EQUAL expression
 			:}
 		  ;
 		  
-shortVarDecl ::= identifierList:il COLON_EQUAL:c expression:e
+shortVarDecl ::= identifierList COLON_EQUAL expression
 				{:
-					RESULT = il + " = " + e + "\n";
+					// RESULT = il + c + e + "\n";
 				:};
 
 functionDecl ::= FUNC functionName:f function:fn
@@ -363,14 +369,14 @@ functionName ::= IDENTIFIER:i
 function ::= signature:sig functionBody:fb
 				{:
 						RESULT = sig +  fb;
-						System.out.println("function" + fb);
+						System.out.println("function" + RESULT);
 				 	
 				:};	
 
 functionBody ::= block:b
 			{:
 					RESULT = b;
-					System.out.println("functionBody" + b);
+					System.out.println("functionBody" + RESULT);
 				 
 				:};	
 
@@ -506,7 +512,7 @@ statement ::=  declaration:d {:
 			 		System.out.println("BLOCK IF STMT " + RESULT);	
 			 	
 				:}
-			 | ifStmt:f   SEMI_COLON:semi 
+			 | ifStmt  SEMI_COLON
 			 {:		
 			 		System.out.println("BLOCK IF STMT SEMI COLON " + RESULT);	
 
@@ -541,9 +547,9 @@ simpleStmt ::=  shortVarDecl:svar
 				{:
 				 
 				:}
-				| assignment:assig
+				| assignment:a
 				{:
-						RESULT = assig;
+						RESULT = a;
 				
 				:}
 		
@@ -566,7 +572,7 @@ incDecStmt ::= expression INCREMENT
 				 	
 				:} ;
 
-assignment ::= expressionList:e1 assign_op:op expressionList:e2
+assignment ::= expressionList:e1 assign_op expressionList:e2
          	 {:	
           			RESULT = e2 + "\n" + e1 + "= " + "t" + (Constants.tCounter-1) + "\n";
 				 
@@ -575,7 +581,7 @@ assignment ::= expressionList:e1 assign_op:op expressionList:e2
  
 assign_op ::=   EQUAL | PLUS EQUAL | MINUS EQUAL | ASTRISK EQUAL | SLASH EQUAL | SHIFT_RIGHT EQUAL | SHIFT_LEFT EQUAL;
 
-ifStmt ::=  IF   expression:e block:b ifStmtHelper1:ifhelper
+ifStmt ::=  IF   expression block ifStmtHelper1
 			{:		
 				
 				// RESULT = "IF " + "t" + Constants.counterT + " Goto " + "L" + Constants.countL++ + "\n" +  e + b + ifhelper;
@@ -597,7 +603,7 @@ ifStmtHelper1 ::=  ELSE ifStmt:is
 					RESULT = is;
 				
 				:}
-				| ELSE block:b
+				| ELSE block
 				{:
 						// RESULT = "Goto " + "L"+ Constants.countL++ + "\n" + b;
 				// System.out.println("IFSTMTHELPER1  " + RESULT);
